@@ -65,9 +65,9 @@
     }
   }
 
-  function handleRutChange(e: CustomEvent) {
-    rutBusqueda = e.detail.rut;
-    rutValido = e.detail.valido;
+  function handleRutChange({ rut, valido }: { rut: string; valido: boolean }) {
+    rutBusqueda = rut;
+    rutValido = valido;
   }
 
   async function buscarPorRut() {
@@ -185,7 +185,7 @@
     </div>
     <div class="mt-4 pt-4 border-t border-slate-100 flex gap-3">
       <button
-        onclick={() => goto(`/clientes/${clienteEncontrado!.cliente.id_cliente}`)}
+        onclick={() => goto(`/clientes/${clienteEncontrado!.cliente.rut}`)}
         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors"
       >
         Ver ficha completa
@@ -242,7 +242,7 @@
             </td>
             <td class="px-6 py-4">
               <button
-                onclick={() => goto(`/clientes/${c.id_cliente}`)}
+                onclick={() => goto(`/clientes/${c.rut}`)}
                 class="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline transition-colors"
               >
                 Ver ficha →

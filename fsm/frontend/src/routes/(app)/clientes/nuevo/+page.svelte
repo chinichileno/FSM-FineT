@@ -48,9 +48,9 @@
     }
   }
 
-  function handleRutChange(e: CustomEvent) {
-    rut = e.detail.rut;
-    rutValido = e.detail.valido;
+  function handleRutChange({ rut: r, valido }: { rut: string; valido: boolean }) {
+    rut = r;
+    rutValido = valido;
   }
 
   async function handleSubmit(e: Event) {
@@ -91,7 +91,7 @@
 
       const cliente = await clientesApi.registrarCliente(token, dto);
       successMsg = 'Cliente registrado correctamente';
-      setTimeout(() => goto(`/clientes/${cliente.id_cliente}`), 500);
+      setTimeout(() => goto(`/clientes/${cliente.rut}`), 500);
     } catch (err) {
       errorMsg = err instanceof Error ? err.message : 'Error al registrar';
     } finally {

@@ -51,9 +51,9 @@
     }
   }
 
-  function handleRutChange(e: CustomEvent) {
-    rutCliente = e.detail.rut;
-    rutValido = e.detail.valido;
+  function handleRutChange({ rut, valido }: { rut: string; valido: boolean }) {
+    rutCliente = rut;
+    rutValido = valido;
   }
 
   async function buscarCliente() {

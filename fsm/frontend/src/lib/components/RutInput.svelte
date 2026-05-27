@@ -1,5 +1,12 @@
 <script lang="ts">
-  let { value = '', error = '', required = false } = $props();
+  interface Props {
+    value?: string;
+    error?: string;
+    required?: boolean;
+    onchange?: (detail: { rut: string; valido: boolean }) => void;
+  }
+
+  let { value = '', error = '', required = false, onchange }: Props = $props();
 
   let displayValue = $state('');
   let isValid = $state<boolean | null>(null);
@@ -52,11 +59,11 @@
     const raw = input.value.replace(/[^0-9kK]/g, '');
     if (raw.length <= 9) {
       displayValue = formatearRut(raw);
+      input.value = displayValue;
     }
-    const event = new CustomEvent('change', {
-      detail: { rut: raw, valido: validarRut(raw) },
-    });
-    input.dispatchEvent(event);
+    const valido = validarRut(raw);
+    isValid = raw.length >= 2 ? valido : null;
+    onchange?.({ rut: raw, valido });
   }
 </script>
 
