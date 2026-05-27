@@ -33,8 +33,6 @@
   let clienteEncontrado: clientesApi.ClienteConHistorial | null = $state(null);
   let showFicha = $state(false);
 
-  let menuAbierto = $state(false);
-
   onMount(() => {
     authStore.checkAuth();
     const state = get(authStore);
@@ -95,150 +93,198 @@
     clienteEncontrado = null;
     rutBusqueda = '';
     rutValido = false;
+    busquedaError = '';
   }
 
-  function estadoColor(estado: string): string {
-    const map: Record<string, string> = {
-      ACTIVO: 'bg-green-100 text-green-800',
-      SUSPENDIDO: 'bg-yellow-100 text-yellow-800',
-      CORTADO: 'bg-red-100 text-red-800',
-      BAJA: 'bg-gray-100 text-gray-800',
-      PENDIENTE: 'bg-blue-100 text-blue-800',
-    };
-    return map[estado] ?? 'bg-gray-100 text-gray-800';
-  }
+  const estadoConfig: Record<string, { bg: string; text: string }> = {
+    ACTIVO:     { bg: 'bg-green-100',  text: 'text-green-800' },
+    SUSPENDIDO: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    CORTADO:    { bg: 'bg-red-100',    text: 'text-red-800' },
+    BAJA:       { bg: 'bg-gray-100',   text: 'text-gray-600' },
+    PENDIENTE:  { bg: 'bg-blue-100',   text: 'text-blue-800' },
+  };
 
-  function verFicha(id: number) {
-    goto(`/clientes/${id}`);
+  function estadoClase(estado: string) {
+    const c = estadoConfig[estado] ?? { bg: 'bg-gray-100', text: 'text-gray-600' };
+    return `${c.bg} ${c.text}`;
   }
-
 </script>
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold text-gray-800">Clientes</h2>
-      {#if rol !== 'TECNICO'}
-        <a
-          href="/clientes/nuevo"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-        >
-          Nuevo Cliente
-        </a>
-      {/if}
-    </div>
 
-    <!-- Búsqueda por RUT -->
-    <div class="bg-white rounded-xl shadow p-4 mb-6">
-      <div class="flex items-end gap-4">
-        <div class="flex-1">
-          <RutInput onchange={handleRutChange} />
-        </div>
-        <button
-          onclick={buscarPorRut}
-          disabled={buscando}
-          class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
-        >
-          {buscando ? 'Buscando...' : 'Buscar'}
-        </button>
-      </div>
-      {#if busquedaError}
-        <p class="text-red-500 text-sm mt-2">{busquedaError}</p>
-      {/if}
-    </div>
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-slate-800">Clientes</h2>
+    <p class="text-slate-500 text-sm mt-0.5">Gestión de clientes y fichas</p>
+  </div>
+  {#if rol !== 'TECNICO'}
+    <a
+      href="/clientes/nuevo"
+      class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-xl shadow-sm transition-all duration-150 text-sm"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      Nuevo Cliente
+    </a>
+  {/if}
+</div>
 
-    <!-- Ficha del cliente encontrado -->
-    {#if showFicha && clienteEncontrado}
-      <div class="bg-white rounded-xl shadow p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Ficha del Cliente</h3>
-          <button onclick={cerrarFicha} class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
-        </div>
-        <div class="mb-4">
-          <p class="text-sm text-gray-600">{clienteEncontrado.cliente.nombre_completo}</p>
-          <p class="text-sm text-gray-500">{clienteEncontrado.cliente.rut}</p>
-          <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium {estadoColor(clienteEncontrado.cliente.estado)}">
-            {clienteEncontrado.cliente.estado}
-          </span>
+<!-- Búsqueda por RUT -->
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
+  <p class="text-sm font-medium text-slate-700 mb-3">Búsqueda rápida por RUT</p>
+  <div class="flex items-end gap-3">
+    <div class="flex-1">
+      <RutInput onchange={handleRutChange} />
+    </div>
+    <button
+      onclick={buscarPorRut}
+      disabled={buscando}
+      class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-medium py-2.5 px-5 rounded-xl transition-all disabled:opacity-50 text-sm"
+    >
+      {#if buscando}
+        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      {:else}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      {/if}
+      {buscando ? 'Buscando...' : 'Buscar'}
+    </button>
+  </div>
+  {#if busquedaError}
+    <p class="text-red-500 text-sm mt-2">{busquedaError}</p>
+  {/if}
+</div>
+
+<!-- Ficha del cliente encontrado -->
+{#if showFicha && clienteEncontrado}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-6">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <h3 class="font-semibold text-slate-800">{clienteEncontrado.cliente.nombre_completo}</h3>
           {#if clienteEncontrado.cliente.es_conflictivo}
-            <span class="inline-block ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">CONFLICTIVO</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+              CONFLICTIVO
+            </span>
           {/if}
         </div>
-        <button
-          onclick={() => verFicha(clienteEncontrado!.cliente.id_cliente)}
-          class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-3 rounded-lg transition-colors"
-        >
-          Ver ficha completa
-        </button>
+        <p class="text-slate-500 font-mono text-sm">{clienteEncontrado.cliente.rut}</p>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 {estadoClase(clienteEncontrado.cliente.estado)}">
+          {clienteEncontrado.cliente.estado}
+        </span>
       </div>
-    {/if}
+      <button onclick={cerrarFicha} class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="mt-4 pt-4 border-t border-slate-100 flex gap-3">
+      <button
+        onclick={() => goto(`/clientes/${clienteEncontrado!.cliente.id_cliente}`)}
+        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded-xl transition-colors"
+      >
+        Ver ficha completa
+      </button>
+    </div>
+  </div>
+{/if}
 
-    <!-- Tabla de clientes -->
-    {#if errorMsg}
-      <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">{errorMsg}</div>
-    {/if}
+{#if errorMsg}
+  <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-5 text-sm">{errorMsg}</div>
+{/if}
 
-    {#if loading}
-      <div class="text-center py-8 text-gray-500">Cargando clientes...</div>
-    {:else}
-      <div class="bg-white rounded-xl shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">RUT</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comuna</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Conflictivo</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            {#each clientes as c}
-              <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 text-sm text-gray-900 font-mono">{c.rut}</td>
-                <td class="px-6 py-4 text-sm text-gray-900">{c.nombre_completo}</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {estadoColor(c.estado)}">
-                    {c.estado}
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500">{c.direccion_principal?.comuna ?? '-'}</td>
-                <td class="px-6 py-4">
-                  {#if c.es_conflictivo}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Sí</span>
-                  {:else}
-                    <span class="text-sm text-gray-400">No</span>
-                  {/if}
-                </td>
-                <td class="px-6 py-4">
-                  <button onclick={() => verFicha(c.id_cliente)} class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Ver ficha
-                  </button>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-
-        {#if total > limit}
-          <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-            <span class="text-sm text-gray-600">Total: {total} clientes</span>
-            <div class="flex gap-2">
+<!-- Tabla de clientes -->
+{#if loading}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+    <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <p class="text-slate-400 text-sm">Cargando clientes...</p>
+  </div>
+{:else}
+  <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <table class="min-w-full divide-y divide-slate-100">
+      <thead>
+        <tr class="bg-slate-50">
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">RUT</th>
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Nombre</th>
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Estado</th>
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Comuna</th>
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Conflictivo</th>
+          <th class="px-6 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Acción</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {#each clientes as c}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 text-sm font-mono text-slate-700">{c.rut}</td>
+            <td class="px-6 py-4">
+              <p class="text-sm font-medium text-slate-800">{c.nombre_completo}</p>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {estadoClase(c.estado)}">
+                {c.estado}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-slate-500">{c.direccion_principal?.comuna ?? '—'}</td>
+            <td class="px-6 py-4">
+              {#if c.es_conflictivo}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Sí</span>
+              {:else}
+                <span class="text-slate-300 text-sm">—</span>
+              {/if}
+            </td>
+            <td class="px-6 py-4">
               <button
-                onclick={() => { page = Math.max(1, page - 1); cargarClientes(); }}
-                disabled={page <= 1}
-                class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
+                onclick={() => goto(`/clientes/${c.id_cliente}`)}
+                class="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline transition-colors"
               >
-                Anterior
+                Ver ficha →
               </button>
-              <span class="px-3 py-1 text-sm">Pág. {page}</span>
-              <button
-                onclick={() => { page++; cargarClientes(); }}
-                disabled={page * limit >= total}
-                class="px-3 py-1 text-sm border rounded hover:bg-gray-100 disabled:opacity-50"
-              >
-                Siguiente
-              </button>
-            </div>
-          </div>
+            </td>
+          </tr>
+        {/each}
+        {#if clientes.length === 0}
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">
+              No hay clientes registrados
+            </td>
+          </tr>
         {/if}
+      </tbody>
+    </table>
+
+    {#if total > limit}
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-sm text-slate-500">
+          Mostrando {(page - 1) * limit + 1}–{Math.min(page * limit, total)} de <strong>{total}</strong> clientes
+        </span>
+        <div class="flex items-center gap-2">
+          <button
+            onclick={() => { page = Math.max(1, page - 1); cargarClientes(); }}
+            disabled={page <= 1}
+            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ← Anterior
+          </button>
+          <span class="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg">
+            {page}
+          </span>
+          <button
+            onclick={() => { page++; cargarClientes(); }}
+            disabled={page * limit >= total}
+            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Siguiente →
+          </button>
+        </div>
       </div>
     {/if}
+  </div>
+{/if}

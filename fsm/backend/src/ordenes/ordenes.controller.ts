@@ -1,0 +1,101 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  ForbiddenException,
+} from '@nestjs/common';
+import { OrdenesService } from './ordenes.service.js';
+import { CrearOtDto } from './dto/crear-ot.dto.js';
+import { AsignarTecnicoDto } from './dto/asignar-tecnico.dto.js';
+import { ActualizarEstadoDto } from './dto/actualizar-estado.dto.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../common/guards/roles.guard.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+
+interface UserPayload {
+  userId: number;
+  id_empresa: number;
+  rol: string;
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('ordenes')
+export class OrdenesController {
+  constructor(private ordenesService: OrdenesService) {}
+
+  @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
+  @Get()
+  listarOT(
+    @CurrentUser() user: UserPayload,
+    @Query('estado') estado?: string,
+    @Query('tipo_ot') tipo_ot?: string,
+    @Query('prioridad') prioridad?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const filtros: Record<string, unknown> = {
+      estado,
+      tipo_ot,
+      prioridad,
+      page: page ? +page : 1,
+      limit: limit ? +limit : 20,
+    };
+
+    if (user.rol === 'TECNICO') {
+      filtros.id_tecnico = user.userId;
+    }
+
+    return this.ordenesService.listarOT(user.id_empresa, filtros);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO')
+  @Get('tecnicos')
+  listarTecnicos(@CurrentUser() user: UserPayload) {
+    return this.ordenesService.listarTecnicos(user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
+  @Get(':id')
+  obtenerOT(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.ordenesService.obtenerOT(+id, user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO')
+  @Post()
+  crearOT(@Body() dto: CrearOtDto, @CurrentUser() user: UserPayload) {
+    return this.ordenesService.crearOT(dto, user.userId, user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO')
+  @Patch(':id/asignar')
+  asignarTecnico(
+    @Param('id') id: string,
+    @Body() dto: AsignarTecnicoDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.ordenesService.asignarTecnico(+id, dto, user.userId, user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
+  @Patch(':id/estado')
+  async actualizarEstado(
+    @Param('id') id: string,
+    @Body() dto: ActualizarEstadoDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    if (user.rol === 'TECNICO') {
+      const ot = await this.ordenesService.obtenerOT(+id, user.id_empresa);
+      const idTecnico = (ot as Record<string, unknown>).id_tecnico;
+      if (idTecnico !== user.userId) {
+        throw new ForbiddenException('Solo puedes actualizar OT asignadas a ti');
+      }
+    }
+    return this.ordenesService.actualizarEstado(+id, dto, user.userId, user.id_empresa);
+  }
+}
