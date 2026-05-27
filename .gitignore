@@ -1,0 +1,14 @@
+# Claude
+.claude/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
