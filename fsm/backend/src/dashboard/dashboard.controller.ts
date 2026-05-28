@@ -1,0 +1,36 @@
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { DashboardService } from './dashboard.service.js';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../common/guards/roles.guard.js';
+import { Roles } from '../common/decorators/roles.decorator.js';
+import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+
+interface UserPayload {
+  userId: number;
+  id_empresa: number;
+  rol: string;
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('dashboard')
+export class DashboardController {
+  constructor(private dashboardService: DashboardService) {}
+
+  @Roles('ADMIN', 'JEFE_TECNICO')
+  @Get()
+  indicadores(@CurrentUser() user: UserPayload) {
+    return this.dashboardService.indicadoresDelDia(user.id_empresa);
+  }
+
+  @Roles('ADMIN')
+  @Get('empresas')
+  listarEmpresas() {
+    return this.dashboardService.listarEmpresas();
+  }
+
+  @Roles('ADMIN')
+  @Get('empresa/:id')
+  datosPorEmpresa(@Param('id') id: string) {
+    return this.dashboardService.datosPorEmpresa(+id);
+  }
+}
