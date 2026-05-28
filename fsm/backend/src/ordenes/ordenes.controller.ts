@@ -62,6 +62,12 @@ export class OrdenesController {
   }
 
   @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
+  @Get('historial-fallas/:id_cliente')
+  historialFallas(@Param('id_cliente') idCliente: string, @CurrentUser() user: UserPayload) {
+    return this.ordenesService.historialFallas(+idCliente, user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
   @Get('materiales')
   obtenerMateriales(@CurrentUser() user: UserPayload) {
     return this.ordenesService.obtenerMateriales(user.id_empresa);

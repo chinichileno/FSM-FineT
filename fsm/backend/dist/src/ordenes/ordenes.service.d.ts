@@ -334,6 +334,92 @@ export declare class OrdenesService {
         observaciones?: string | null | undefined;
         resuelto_remotamente?: boolean | undefined;
     }>;
+    historialFallas(id_cliente: number, id_empresa: number): Promise<{
+        historial: ({
+            ticket: ({
+                categoria: {
+                    nombre: string;
+                    id_categoria: number;
+                    sla_horas: number | null;
+                };
+            } & {
+                id_ticket: number;
+                id_empresa: number | null;
+                id_cliente: number | null;
+                prioridad: string;
+                estado: string;
+                fecha_creacion: Date;
+                resuelto_remotamente: boolean;
+                descripcion: string | null;
+                id_categoria: number;
+                id_usuario_asignado: number | null;
+                id_conversacion_bot: number | null;
+                codigo_seguimiento: string | null;
+                fecha_cierre: Date | null;
+                origen: string | null;
+            }) | null;
+            historial: {
+                id_ot: number | null;
+                observaciones: string | null;
+                id_usuario: number | null;
+                fecha_hora: Date;
+                id_historial_ot: bigint;
+                estado_anterior: string | null;
+                estado_nuevo: string | null;
+            }[];
+            materiales: ({
+                tipo_equipo: {
+                    nombre: string;
+                    categoria: string | null;
+                } | null;
+            } & {
+                id_ot: number | null;
+                id_tipo_equipo: number | null;
+                id_uso: number;
+                id_unidad: number | null;
+                cantidad: import("@prisma/client-runtime-utils").Decimal;
+            })[];
+            fotos: {
+                url_cloudinary: string;
+                formato: string | null;
+            }[];
+            llamada: {
+                id_ot: number | null;
+                observaciones: string | null;
+                id_llamada: number;
+                resultado: string;
+                fecha_llamada: Date;
+            } | null;
+        } & {
+            id_ot: number;
+            id_ticket: number | null;
+            id_empresa: number | null;
+            id_cliente: number | null;
+            id_tecnico: number | null;
+            id_tecnico_externo: number | null;
+            id_direccion: number | null;
+            tipo_ot: string;
+            prioridad: string;
+            estado: string;
+            fecha_creacion: Date;
+            fecha_programada: Date | null;
+            fecha_completada: Date | null;
+            potencia_optica_dbm: import("@prisma/client-runtime-utils").Decimal | null;
+            observaciones: string | null;
+            resuelto_remotamente: boolean;
+        })[];
+        categoria_frecuente: {
+            id_categoria: number;
+            nombre: string;
+            sla_horas: number | null;
+        } | null;
+        estadisticas: {
+            total_reparaciones: number;
+            reparaciones_completadas: number;
+            tiempo_promedio_dias: number | null;
+            potencia_promedio_dbm: number | null;
+        };
+    }>;
     obtenerMateriales(id_empresa: number): Promise<{
         id_tipo_equipo: number;
         nombre: string;
