@@ -5,19 +5,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { Module, forwardRef } from '@nestjs/common';
-import { ClientesModule } from '../clientes/clientes.module.js';
-import { DashboardModule } from '../dashboard/dashboard.module.js';
-import { OrdenesController } from './ordenes.controller.js';
-import { OrdenesService } from './ordenes.service.js';
-let OrdenesModule = class OrdenesModule {
+import { OrdenesModule } from '../ordenes/ordenes.module.js';
+import { DashboardController } from './dashboard.controller.js';
+import { DashboardService } from './dashboard.service.js';
+import { DashboardGateway } from './dashboard.gateway.js';
+let DashboardModule = class DashboardModule {
 };
-OrdenesModule = __decorate([
+DashboardModule = __decorate([
     Module({
-        imports: [ClientesModule, forwardRef(() => DashboardModule)],
-        controllers: [OrdenesController],
-        providers: [OrdenesService],
-        exports: [OrdenesService],
+        imports: [forwardRef(() => OrdenesModule)],
+        controllers: [DashboardController],
+        providers: [DashboardService, DashboardGateway],
+        exports: [DashboardGateway],
     })
-], OrdenesModule);
-export { OrdenesModule };
-//# sourceMappingURL=ordenes.module.js.map
+], DashboardModule);
+export { DashboardModule };
+//# sourceMappingURL=dashboard.module.js.map

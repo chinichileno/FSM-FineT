@@ -7,9 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { validarRut } from '../common/utils/rut.util.js';
+import { DashboardGateway } from '../dashboard/dashboard.gateway.js';
 const TRANSICIONES_VALIDAS = {
     PENDIENTE: ['ASIGNADA', 'CANCELADA'],
     ASIGNADA: ['EN_CURSO', 'PENDIENTE', 'CANCELADA'],
@@ -25,8 +29,10 @@ const OT_INCLUDE = {
 };
 let OrdenesService = class OrdenesService {
     prisma;
-    constructor(prisma) {
+    dashboardGateway;
+    constructor(prisma, dashboardGateway) {
         this.prisma = prisma;
+        this.dashboardGateway = dashboardGateway;
     }
     async crearOT(dto, userId, id_empresa) {
         if (!validarRut(dto.rut_cliente)) {
@@ -242,7 +248,9 @@ let OrdenesService = class OrdenesService {
                 },
             });
         });
-        return this.obtenerOT(id_ot, id_empresa);
+        const resultado = await this.obtenerOT(id_ot, id_empresa);
+        this.dashboardGateway.emitirActualizacion(id_empresa, { tipo: 'OT_ACTUALIZADA', id_ot });
+        return resultado;
     }
     async cerrarOT(id_ot, dto, userId, id_empresa) {
         const ot = await this.prisma.orden_trabajo.findFirst({ where: { id_ot, id_empresa } });
@@ -332,6 +340,7 @@ let OrdenesService = class OrdenesService {
             },
         });
         const advertencia_potencia = dto.potencia_optica_dbm < -24 || dto.potencia_optica_dbm > -19;
+        this.dashboardGateway.emitirActualizacion(id_empresa, { tipo: 'OT_ACTUALIZADA', id_ot });
         return { ...otActualizada, advertencia_potencia };
     }
     async historialFallas(id_cliente, id_empresa) {
@@ -416,7 +425,9 @@ let OrdenesService = class OrdenesService {
 };
 OrdenesService = __decorate([
     Injectable(),
-    __metadata("design:paramtypes", [PrismaService])
+    __param(1, Inject(forwardRef(() => DashboardGateway))),
+    __metadata("design:paramtypes", [PrismaService,
+        DashboardGateway])
 ], OrdenesService);
 export { OrdenesService };
 //# sourceMappingURL=ordenes.service.js.map

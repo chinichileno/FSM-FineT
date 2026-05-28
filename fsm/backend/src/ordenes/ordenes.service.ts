@@ -1,10 +1,11 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { validarRut } from '../common/utils/rut.util.js';
 import { CrearOtDto } from './dto/crear-ot.dto.js';
 import { AsignarTecnicoDto } from './dto/asignar-tecnico.dto.js';
 import { ActualizarEstadoDto } from './dto/actualizar-estado.dto.js';
 import { CerrarOtDto } from './dto/cerrar-ot.dto.js';
+import { DashboardGateway } from '../dashboard/dashboard.gateway.js';
 
 const TRANSICIONES_VALIDAS: Record<string, string[]> = {
   PENDIENTE: ['ASIGNADA', 'CANCELADA'],
@@ -24,7 +25,10 @@ const OT_INCLUDE = {
 
 @Injectable()
 export class OrdenesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => DashboardGateway)) private dashboardGateway: DashboardGateway,
+  ) {}
 
   async crearOT(dto: CrearOtDto, userId: number, id_empresa: number) {
     if (!validarRut(dto.rut_cliente)) {
@@ -288,7 +292,9 @@ export class OrdenesService {
       });
     });
 
-    return this.obtenerOT(id_ot, id_empresa);
+    const resultado = await this.obtenerOT(id_ot, id_empresa);
+    this.dashboardGateway.emitirActualizacion(id_empresa, { tipo: 'OT_ACTUALIZADA', id_ot });
+    return resultado;
   }
 
   async cerrarOT(id_ot: number, dto: CerrarOtDto, userId: number, id_empresa: number) {
@@ -391,6 +397,7 @@ export class OrdenesService {
     const advertencia_potencia =
       dto.potencia_optica_dbm < -24 || dto.potencia_optica_dbm > -19;
 
+    this.dashboardGateway.emitirActualizacion(id_empresa, { tipo: 'OT_ACTUALIZADA', id_ot });
     return { ...otActualizada, advertencia_potencia };
   }
 
