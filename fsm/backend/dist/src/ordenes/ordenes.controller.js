@@ -15,6 +15,7 @@ import { OrdenesService } from './ordenes.service.js';
 import { CrearOtDto } from './dto/crear-ot.dto.js';
 import { AsignarTecnicoDto } from './dto/asignar-tecnico.dto.js';
 import { ActualizarEstadoDto } from './dto/actualizar-estado.dto.js';
+import { CerrarOtDto } from './dto/cerrar-ot.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -40,6 +41,9 @@ let OrdenesController = class OrdenesController {
     listarTecnicos(user) {
         return this.ordenesService.listarTecnicos(user.id_empresa);
     }
+    obtenerMateriales(user) {
+        return this.ordenesService.obtenerMateriales(user.id_empresa);
+    }
     obtenerOT(id, user) {
         return this.ordenesService.obtenerOT(+id, user.id_empresa);
     }
@@ -48,6 +52,9 @@ let OrdenesController = class OrdenesController {
     }
     asignarTecnico(id, dto, user) {
         return this.ordenesService.asignarTecnico(+id, dto, user.userId, user.id_empresa);
+    }
+    cerrarOT(id, dto, user) {
+        return this.ordenesService.cerrarOT(+id, dto, user.userId, user.id_empresa);
     }
     async actualizarEstado(id, dto, user) {
         if (user.rol === 'TECNICO') {
@@ -83,6 +90,14 @@ __decorate([
 ], OrdenesController.prototype, "listarTecnicos", null);
 __decorate([
     Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO'),
+    Get('materiales'),
+    __param(0, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], OrdenesController.prototype, "obtenerMateriales", null);
+__decorate([
+    Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO'),
     Get(':id'),
     __param(0, Param('id')),
     __param(1, CurrentUser()),
@@ -109,6 +124,16 @@ __decorate([
     __metadata("design:paramtypes", [String, AsignarTecnicoDto, Object]),
     __metadata("design:returntype", void 0)
 ], OrdenesController.prototype, "asignarTecnico", null);
+__decorate([
+    Roles('TECNICO'),
+    Post(':id/cerrar'),
+    __param(0, Param('id')),
+    __param(1, Body()),
+    __param(2, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, CerrarOtDto, Object]),
+    __metadata("design:returntype", void 0)
+], OrdenesController.prototype, "cerrarOT", null);
 __decorate([
     Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO'),
     Patch(':id/estado'),

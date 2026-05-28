@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { validarRut } from '../common/utils/rut.util.js';
 const TRANSICIONES_VALIDAS = {
@@ -243,6 +243,121 @@ let OrdenesService = class OrdenesService {
             });
         });
         return this.obtenerOT(id_ot, id_empresa);
+    }
+    async cerrarOT(id_ot, dto, userId, id_empresa) {
+        const ot = await this.prisma.orden_trabajo.findFirst({ where: { id_ot, id_empresa } });
+        if (!ot)
+            throw new NotFoundException('OT no encontrada');
+        if (ot.estado !== 'EN_CURSO') {
+            throw new BadRequestException('Solo se pueden cerrar OT en estado EN_CURSO');
+        }
+        if (ot.id_tecnico !== userId) {
+            throw new ForbiddenException('Solo el técnico asignado puede cerrar esta OT');
+        }
+        await this.prisma.$transaction(async (tx) => {
+            await tx.evidencia_foto.createMany({
+                data: dto.fotos.map((f) => ({
+                    id_ot,
+                    url_cloudinary: f.url_cloudinary,
+                    formato: f.formato.slice(0, 5),
+                    tamano_kb: f.tamano_kb,
+                })),
+            });
+            for (const material of dto.materiales) {
+                const tipo = await tx.tipo_equipo.findUnique({
+                    where: { id_tipo_equipo: material.id_tipo_equipo },
+                });
+                const stock = await tx.stock_consumible.findFirst({
+                    where: { id_tipo_equipo: material.id_tipo_equipo },
+                });
+                if (!stock || Number(stock.cantidad_disponible) < material.cantidad) {
+                    throw new BadRequestException(`Stock insuficiente para ${tipo?.nombre ?? String(material.id_tipo_equipo)}`);
+                }
+                await tx.stock_consumible.update({
+                    where: { id_stock: stock.id_stock },
+                    data: { cantidad_disponible: { decrement: material.cantidad } },
+                });
+            }
+            if (dto.materiales.length > 0) {
+                await tx.uso_material_ot.createMany({
+                    data: dto.materiales.map((m) => ({
+                        id_ot,
+                        id_tipo_equipo: m.id_tipo_equipo,
+                        cantidad: m.cantidad,
+                    })),
+                });
+            }
+            await tx.llamada_cortes.create({
+                data: {
+                    id_ot,
+                    resultado: dto.resultado_llamada,
+                    observaciones: dto.obs_llamada ?? null,
+                },
+            });
+            await tx.orden_trabajo.update({
+                where: { id_ot },
+                data: {
+                    estado: 'COMPLETADA',
+                    fecha_completada: new Date(),
+                    potencia_optica_dbm: dto.potencia_optica_dbm,
+                    resuelto_remotamente: dto.resuelto_remotamente ?? false,
+                },
+            });
+            await tx.historial_ot.create({
+                data: {
+                    id_ot,
+                    id_usuario: userId,
+                    estado_anterior: 'EN_CURSO',
+                    estado_nuevo: 'COMPLETADA',
+                },
+            });
+            await tx.log_auditoria.create({
+                data: {
+                    id_usuario: userId,
+                    accion: 'CERRAR_OT',
+                    entidad_afectada: 'orden_trabajo',
+                    id_entidad_afectada: id_ot,
+                },
+            });
+        });
+        const otActualizada = await this.prisma.orden_trabajo.findUnique({
+            where: { id_ot },
+            include: {
+                cliente: { select: { id_cliente: true, nombre_completo: true, rut: true, es_conflictivo: true } },
+                tecnico: { select: { id_usuario: true, nombre_completo: true, nombre_usuario: true } },
+                direccion: { select: { direccion_completa: true, comuna: true } },
+                fotos: true,
+                materiales: { include: { tipo_equipo: { select: { nombre: true } } } },
+                llamada: true,
+            },
+        });
+        const advertencia_potencia = dto.potencia_optica_dbm < -24 || dto.potencia_optica_dbm > -19;
+        return { ...otActualizada, advertencia_potencia };
+    }
+    async obtenerMateriales(id_empresa) {
+        const tipos = await this.prisma.tipo_equipo.findMany({
+            where: { id_empresa, activo: true },
+            include: {
+                stock: {
+                    select: { id_stock: true, cantidad_disponible: true, umbral_minimo: true },
+                    take: 1,
+                },
+            },
+        });
+        return tipos.map((t) => ({
+            id_tipo_equipo: t.id_tipo_equipo,
+            nombre: t.nombre,
+            categoria: t.categoria,
+            requiere_serie_individual: t.requiere_serie_individual ?? false,
+            stock: t.stock[0]
+                ? {
+                    cantidad_disponible: Number(t.stock[0].cantidad_disponible),
+                    umbral_minimo: t.stock[0].umbral_minimo
+                        ? Number(t.stock[0].umbral_minimo)
+                        : null,
+                }
+                : null,
+        }));
     }
 };
 OrdenesService = __decorate([

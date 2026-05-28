@@ -13,6 +13,7 @@ import { OrdenesService } from './ordenes.service.js';
 import { CrearOtDto } from './dto/crear-ot.dto.js';
 import { AsignarTecnicoDto } from './dto/asignar-tecnico.dto.js';
 import { ActualizarEstadoDto } from './dto/actualizar-estado.dto.js';
+import { CerrarOtDto } from './dto/cerrar-ot.dto.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
@@ -61,6 +62,12 @@ export class OrdenesController {
   }
 
   @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
+  @Get('materiales')
+  obtenerMateriales(@CurrentUser() user: UserPayload) {
+    return this.ordenesService.obtenerMateriales(user.id_empresa);
+  }
+
+  @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
   @Get(':id')
   obtenerOT(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     return this.ordenesService.obtenerOT(+id, user.id_empresa);
@@ -80,6 +87,16 @@ export class OrdenesController {
     @CurrentUser() user: UserPayload,
   ) {
     return this.ordenesService.asignarTecnico(+id, dto, user.userId, user.id_empresa);
+  }
+
+  @Roles('TECNICO')
+  @Post(':id/cerrar')
+  cerrarOT(
+    @Param('id') id: string,
+    @Body() dto: CerrarOtDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.ordenesService.cerrarOT(+id, dto, user.userId, user.id_empresa);
   }
 
   @Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO')
