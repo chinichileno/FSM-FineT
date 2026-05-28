@@ -10,25 +10,25 @@ export declare class ClientesController {
     }, page?: number, limit?: number): Promise<{
         data: ({
             direcciones: {
-                id_cliente: number | null;
-                id_direccion: number;
                 direccion_completa: string;
                 comuna: string;
                 ciudad: string | null;
+                id_cliente: number | null;
                 es_principal: boolean;
+                id_direccion: number;
             }[];
         } & {
             id_empresa: number | null;
-            nombre_completo: string;
             email: string | null;
+            nombre_completo: string;
             fecha_creacion: Date;
-            id_cliente: number;
             rut: string | null;
             telefono: string | null;
-            password_portal_hash: string | null;
             estado: string;
             es_conflictivo: boolean;
             obs_conflictivo: string | null;
+            id_cliente: number;
+            password_portal_hash: string | null;
             importado_masivo: boolean;
         })[];
         total: number;
@@ -57,18 +57,18 @@ export declare class ClientesController {
             obs_conflictivo: string | null;
             fecha_creacion: Date;
             direccion_principal: {
-                id_cliente: number | null;
-                id_direccion: number;
                 direccion_completa: string;
                 comuna: string;
                 ciudad: string | null;
+                id_cliente: number | null;
                 es_principal: boolean;
+                id_direccion: number;
             };
             contrato_activo: {
                 plan: {
                     id_empresa: number | null;
-                    activo: boolean;
                     descripcion: string | null;
+                    activo: boolean;
                     id_plan: number;
                     nombre_comercial: string;
                     tipo_plan: string;
@@ -78,9 +78,9 @@ export declare class ClientesController {
                 } | null;
             } & {
                 id_empresa: number | null;
-                id_cliente: number | null;
-                estado: string;
                 id_plan: number | null;
+                estado: string;
+                id_cliente: number | null;
                 id_contrato: number;
                 fecha_inicio: Date;
                 dia_vencimiento: number;
@@ -90,9 +90,9 @@ export declare class ClientesController {
         historial_ot: {
             fecha_creacion: Date;
             estado: string;
-            prioridad: string;
             id_ot: number;
             tipo_ot: string;
+            prioridad: string;
             fecha_completada: Date | null;
         }[];
     }>;
@@ -101,50 +101,50 @@ export declare class ClientesController {
         id_empresa: number;
     }): Promise<{
         direcciones: {
-            id_cliente: number | null;
-            id_direccion: number;
             direccion_completa: string;
             comuna: string;
             ciudad: string | null;
+            id_cliente: number | null;
             es_principal: boolean;
+            id_direccion: number;
         }[];
     } & {
         id_empresa: number | null;
-        nombre_completo: string;
         email: string | null;
+        nombre_completo: string;
         fecha_creacion: Date;
-        id_cliente: number;
         rut: string | null;
         telefono: string | null;
-        password_portal_hash: string | null;
         estado: string;
         es_conflictivo: boolean;
         obs_conflictivo: string | null;
+        id_cliente: number;
+        password_portal_hash: string | null;
         importado_masivo: boolean;
     }>;
     editarFicha(id: string, dto: EditarClienteDto, user: {
         userId: number;
     }): Promise<({
         direcciones: {
-            id_cliente: number | null;
-            id_direccion: number;
             direccion_completa: string;
             comuna: string;
             ciudad: string | null;
+            id_cliente: number | null;
             es_principal: boolean;
+            id_direccion: number;
         }[];
     } & {
         id_empresa: number | null;
-        nombre_completo: string;
         email: string | null;
+        nombre_completo: string;
         fecha_creacion: Date;
-        id_cliente: number;
         rut: string | null;
         telefono: string | null;
-        password_portal_hash: string | null;
         estado: string;
         es_conflictivo: boolean;
         obs_conflictivo: string | null;
+        id_cliente: number;
+        password_portal_hash: string | null;
         importado_masivo: boolean;
     }) | null>;
     marcarConflictivo(id: string, dto: MarcarConflictivoDto, user: {

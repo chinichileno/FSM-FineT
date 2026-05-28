@@ -3,6 +3,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 
+// BigInt fields (e.g. historial_ot.id_historial_ot) must be serializable
+(BigInt.prototype as unknown as Record<string, unknown>).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

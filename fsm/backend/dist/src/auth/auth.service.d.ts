@@ -17,9 +17,9 @@ export declare class AuthService {
     crearUsuario(dto: CrearUsuarioDto, creadorId: number): Promise<{
         id_empresa: number | null;
         id_usuario: number;
-        nombre_completo: string;
         nombre_usuario: string | null;
         email: string | null;
+        nombre_completo: string;
         password_hash: string;
         activo: boolean;
         fecha_creacion: Date;
