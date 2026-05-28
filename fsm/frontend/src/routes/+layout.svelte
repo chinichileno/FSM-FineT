@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import { authStore } from '$lib/stores/auth.store';
   import '../app.css';
 
@@ -10,4 +11,10 @@
   let { children } = $props();
 </script>
 
-{@render children?.()}
+{#if $page.url.pathname.startsWith('/terreno')}
+  <div class="max-w-lg mx-auto min-h-screen">
+    {@render children?.()}
+  </div>
+{:else}
+  {@render children?.()}
+{/if}

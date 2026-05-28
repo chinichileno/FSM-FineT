@@ -103,7 +103,7 @@
 
 
   <!-- Agregar con las proximas features -->
-  <!-- Reportes (próximamente) 
+  <!-- Reportes (próximamente) -->
   <div class="relative overflow-hidden bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6 opacity-60">
     <div class="flex items-start gap-4">
       <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">📊</div>
@@ -113,8 +113,8 @@
       </div>
     </div>
   </div>
-  -->
-  <!-- Inventario (próximamente) 
+
+  <!-- Inventario (próximamente) -->
   <div class="relative overflow-hidden bg-slate-50 rounded-2xl border border-dashed border-slate-300 p-6 opacity-60">
     <div class="flex items-start gap-4">
       <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">📦</div>
@@ -124,5 +124,4 @@
       </div>
     </div>
   </div>
-  -->
 </div>
