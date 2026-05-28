@@ -334,6 +334,60 @@ let OrdenesService = class OrdenesService {
         const advertencia_potencia = dto.potencia_optica_dbm < -24 || dto.potencia_optica_dbm > -19;
         return { ...otActualizada, advertencia_potencia };
     }
+    async historialFallas(id_cliente, id_empresa) {
+        const ots = await this.prisma.orden_trabajo.findMany({
+            where: { id_cliente, id_empresa, tipo_ot: 'REPARACION' },
+            orderBy: { fecha_creacion: 'desc' },
+            take: 20,
+            include: {
+                historial: { orderBy: { fecha_hora: 'desc' }, take: 1 },
+                fotos: { select: { url_cloudinary: true, formato: true } },
+                materiales: {
+                    include: { tipo_equipo: { select: { nombre: true, categoria: true } } },
+                },
+                llamada: true,
+                ticket: { include: { categoria: true } },
+            },
+        });
+        const conteo = new Map();
+        for (const ot of ots) {
+            const idCat = ot.ticket?.id_categoria;
+            if (idCat)
+                conteo.set(idCat, (conteo.get(idCat) ?? 0) + 1);
+        }
+        let categoria_frecuente = null;
+        if (conteo.size > 0) {
+            const [idTop] = [...conteo.entries()].sort((a, b) => b[1] - a[1])[0];
+            const cat = await this.prisma.categoria_falla.findUnique({ where: { id_categoria: idTop } });
+            if (cat)
+                categoria_frecuente = { id_categoria: cat.id_categoria, nombre: cat.nombre, sla_horas: cat.sla_horas };
+        }
+        const completadas = ots.filter((o) => o.estado === 'COMPLETADA');
+        let tiempo_promedio_dias = null;
+        const conTiempo = completadas.filter((o) => o.fecha_completada);
+        if (conTiempo.length > 0) {
+            const suma = conTiempo.reduce((acc, o) => {
+                return acc + (new Date(o.fecha_completada).getTime() - new Date(o.fecha_creacion).getTime());
+            }, 0);
+            tiempo_promedio_dias = Math.round((suma / conTiempo.length / 86400000) * 10) / 10;
+        }
+        let potencia_promedio_dbm = null;
+        const conPotencia = completadas.filter((o) => o.potencia_optica_dbm !== null).slice(0, 5);
+        if (conPotencia.length > 0) {
+            const suma = conPotencia.reduce((acc, o) => acc + Number(o.potencia_optica_dbm), 0);
+            potencia_promedio_dbm = Math.round((suma / conPotencia.length) * 10) / 10;
+        }
+        return {
+            historial: ots,
+            categoria_frecuente,
+            estadisticas: {
+                total_reparaciones: ots.length,
+                reparaciones_completadas: completadas.length,
+                tiempo_promedio_dias,
+                potencia_promedio_dbm,
+            },
+        };
+    }
     async obtenerMateriales(id_empresa) {
         const tipos = await this.prisma.tipo_equipo.findMany({
             where: { id_empresa, activo: true },

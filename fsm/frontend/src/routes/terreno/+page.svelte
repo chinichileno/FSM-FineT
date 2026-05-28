@@ -5,10 +5,12 @@
   import { authStore } from '$lib/stores/auth.store';
   import * as ordenesApi from '$lib/api/ordenes.api';
   import EstadoBadge from '$lib/components/EstadoBadge.svelte';
+  import HistorialFallasPanel from '$lib/components/HistorialFallasPanel.svelte';
 
   let token = '';
   let nombreTecnico = $state('');
   let userId = $state(0);
+  let historialClienteId = $state<number | null>(null);
 
   let ots = $state<ordenesApi.OT[]>([]);
   let loading = $state(true);
@@ -186,6 +188,18 @@
                   Programada: {new Date(ot.fecha_programada).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               {/if}
+
+              {#if ot.tipo_ot === 'REPARACION' && ot.cliente?.id_cliente}
+                <button
+                  onclick={() => historialClienteId = ot.cliente?.id_cliente ?? null}
+                  class="mt-2 flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-800 font-medium"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Ver historial fallas
+                </button>
+              {/if}
             </div>
 
             <!-- Acciones -->
@@ -236,3 +250,33 @@
     {/if}
   </main>
 </div>
+
+<!-- Bottom sheet: historial de fallas -->
+{#if historialClienteId !== null}
+  <div
+    class="fixed inset-0 bg-black/50 z-50 flex flex-col justify-end"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    onclick={(e: MouseEvent) => { if (e.target === e.currentTarget) historialClienteId = null; }}
+    onkeydown={(e: KeyboardEvent) => { if (e.key === 'Escape') historialClienteId = null; }}
+  >
+    <div class="bg-white rounded-t-2xl max-h-[85dvh] flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+        <h3 class="font-semibold text-slate-800">Historial de Fallas</h3>
+        <button
+          onclick={() => historialClienteId = null}
+          class="text-slate-400 hover:text-slate-600 p-1"
+          aria-label="Cerrar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="overflow-y-auto flex-1 p-4">
+        <HistorialFallasPanel id_cliente={historialClienteId} compact={true} />
+      </div>
+    </div>
+  </div>
+{/if}

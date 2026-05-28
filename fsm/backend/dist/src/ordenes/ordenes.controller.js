@@ -41,6 +41,9 @@ let OrdenesController = class OrdenesController {
     listarTecnicos(user) {
         return this.ordenesService.listarTecnicos(user.id_empresa);
     }
+    historialFallas(idCliente, user) {
+        return this.ordenesService.historialFallas(+idCliente, user.id_empresa);
+    }
     obtenerMateriales(user) {
         return this.ordenesService.obtenerMateriales(user.id_empresa);
     }
@@ -88,6 +91,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], OrdenesController.prototype, "listarTecnicos", null);
+__decorate([
+    Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO'),
+    Get('historial-fallas/:id_cliente'),
+    __param(0, Param('id_cliente')),
+    __param(1, CurrentUser()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], OrdenesController.prototype, "historialFallas", null);
 __decorate([
     Roles('ADMIN', 'JEFE_TECNICO', 'TECNICO'),
     Get('materiales'),
